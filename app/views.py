@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-from flask_login import login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Poll, PollOption, Comment
 from . import db
@@ -20,23 +19,18 @@ def get_polls(sort=None):
     for poll in polls:
         poll_list.append(poll.to_dict())
 
-    user = User.query.filter_by(username="Scythe").first()
-    return jsonify(user=user.to_dict(), polls=poll_list)
+    return jsonify(polls=poll_list)
 
 
 @views.route("/api/poll/<poll_id>")
 def get_poll(poll_id):
     poll = Poll.query.get(poll_id)
-    user = User.query.filter_by(username="Scythe").first()
-    return jsonify(user=user.to_dict(), poll=poll.to_dict())
+    return jsonify(poll=poll.to_dict())
 
 
-@views.route("/api/user")
 @views.route("/api/user/<username>")
 def get_profile(username=None):
-    user = User.query.filter_by(username="Scythe").first()
-    if username != None:
-        user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
 
     polls = []
     for poll in user.polls:
@@ -53,7 +47,7 @@ def get_profile(username=None):
 def vote_poll():
     form_data = request.get_json()
     poll = Poll.query.get(form_data["pollId"])
-    user = User.query.filter_by(username="Scythe").first()
+    user = User.query.filter_by(username=form_data["username"]).first()
     vote = form_data["vote"]
 
     if user in poll.voters:
@@ -74,7 +68,7 @@ def vote_poll():
 @views.route("/api/create-poll", methods=["POST"])
 def create_poll():
     form_data = request.get_json()
-    user = User.query.filter_by(username="Scythe").first()
+    user = User.query.filter_by(username=form_data["username"]).first()
     title = form_data["title"]
     tag = form_data["tag"]
     options = form_data["options"]
@@ -95,7 +89,7 @@ def create_poll():
 @views.route("/api/create-comment", methods=["POST"])
 def create_comment():
     form_data = request.get_json()
-    user = User.query.filter_by(username="Scythe").first()
+    user = User.query.filter_by(username=form_data["username"]).first()
     poll = Poll.query.get(form_data["pollId"])
     content = form_data["content"]
 
@@ -121,7 +115,6 @@ def create_user():
     new_user = User(username=username, email=email, password=generate_password_hash(password, method="sha256"))
     db.session.add(new_user)
     db.session.commit()
-    login_user(new_user)
 
     return jsonify(status="success")
 
@@ -167,11 +160,4 @@ def login():
     if not check_password_hash(user.password, password):
         return jsonify(status="failure", message="Incorrect password")
 
-    login_user(user, remember=True)
     return jsonify(status="success", message=f"Logged in as {user.username}")
-
-
-@views.route("/api/logout", methods=["POST"])
-def logout():
-    logout_user()
-    return jsonify(status="success", message="Logged out user")
