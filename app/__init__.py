@@ -27,6 +27,6 @@ def create_app(config_type="development"):
     login_manager.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
     mail.init_app(app)
-    CORS(app, resources=r'/*', headers='Content-Type')
+    CORS(app)
 
     return app
