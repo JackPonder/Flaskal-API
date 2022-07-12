@@ -6,48 +6,37 @@ from . import db
 views = Blueprint("views", __name__)
 
 
-@views.route("/api/polls")
-@views.route("/api/polls/<sort>")
-def get_polls(sort=None):
+@views.route("/api/get-polls")
+def get_polls():
     polls = Poll.query.order_by(Poll.time_created).all()
     polls.reverse()
-    if sort != None:
-        polls = Poll.query.filter_by(tag=sort).order_by(Poll.time_created).all()
-        polls.reverse()
 
     poll_list = []
-    for poll in polls:
+    for i, poll in enumerate(polls):
         poll_list.append(poll.to_dict())
+        if i > 28:
+            break
 
     return jsonify(polls=poll_list)
 
 
-@views.route("/api/poll/<poll_id>")
+@views.route("/api/get-poll/<poll_id>")
 def get_poll(poll_id):
     poll = Poll.query.get(poll_id)
     return jsonify(poll=poll.to_dict())
 
 
-@views.route("/api/user/<username>")
+@views.route("/api/get-user/<username>")
 def get_profile(username=None):
     user = User.query.filter_by(username=username).first()
-
-    polls = []
-    for poll in user.polls:
-        polls.append(poll.to_dict())
-        
-    comments = []
-    for comment in user.comments:
-        comments.append(comment.to_dict())
-
-    return jsonify(user=user.to_dict(), polls=polls, comments=comments)
+    return jsonify(user=user.to_dict())
 
 
 @views.route("/api/vote-poll", methods=["POST"])
 def vote_poll():
     form_data = request.get_json()
     poll = Poll.query.get(form_data["pollId"])
-    user = User.query.filter_by(username=form_data["username"]).first()
+    user = User.query.get(form_data["userId"])
     vote = form_data["vote"]
 
     if user in poll.voters:
@@ -68,7 +57,7 @@ def vote_poll():
 @views.route("/api/create-poll", methods=["POST"])
 def create_poll():
     form_data = request.get_json()
-    user = User.query.filter_by(username=form_data["username"]).first()
+    user = User.query.get(form_data["userId"])
     title = form_data["title"]
     tag = form_data["tag"]
     options = form_data["options"]
@@ -89,13 +78,14 @@ def create_poll():
 @views.route("/api/create-comment", methods=["POST"])
 def create_comment():
     form_data = request.get_json()
-    user = User.query.filter_by(username=form_data["username"]).first()
+    user = User.query.get(form_data["userId"])
     poll = Poll.query.get(form_data["pollId"])
     content = form_data["content"]
 
-    new_comment = Comment(user=user, poll=poll, content=content)
-    db.session.add(new_comment)
-    db.session.commit()
+    if len(content):
+        new_comment = Comment(user=user, poll=poll, content=content)
+        db.session.add(new_comment)
+        db.session.commit()
 
     return jsonify(status="success")
 
@@ -160,4 +150,4 @@ def login():
     if not check_password_hash(user.password, password):
         return jsonify(status="failure", message="Incorrect password")
 
-    return jsonify(status="success", message=f"Logged in as {user.username}")
+    return jsonify(status="success", user=user.to_dict())

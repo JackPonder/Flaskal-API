@@ -28,10 +28,11 @@ class User(db.Model, UserMixin):
     def to_dict(self):
         return {
             "id": self.id,
-            "username": self.username, 
-            "email": self.email,
+            "username": self.username,
             "dateJoined": self.date_joined,
             "role": self.role,
+            "comments": [comment.to_dict() for comment in self.comments],
+            "polls": [poll.to_dict() for poll in self.polls],
         }
 
     def __repr__(self):
@@ -106,7 +107,9 @@ class Comment(db.Model):
 
     def to_dict(self):
         return {
+            "id": self.id,
             "creator": self.user.username,
+            "poll": { "title": self.poll.title, "id": self.poll.id },
             "content": self.content,
             "timeCreated": self.time_created,
         }
