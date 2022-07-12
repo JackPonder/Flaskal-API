@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from . import db, login_manager
+from . import db
 
 voters_table = db.Table(
     "voters",
@@ -115,8 +115,3 @@ class Comment(db.Model):
 
     def __repr__(self):
         return f"<Comment #{self.id}>"
-
-
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(int(id))
