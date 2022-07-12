@@ -58,6 +58,7 @@ class Poll(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "creator": self.user.username,
             "title": self.title, 
             "options": [option.to_dict() for option in self.options],
             "totalVotes": self.total_votes,

@@ -109,11 +109,14 @@ def create_user():
     return jsonify(status="success")
 
 
-@views.route("/api/delete-poll/<poll_id>", methods=["POST"])
+@views.route("/api/delete-poll/<poll_id>", methods=["DELETE"])
 def delete_poll(poll_id):
     deleted_poll = Poll.query.get(poll_id)
     for option in deleted_poll.options:
         db.session.delete(option)  
+
+    for comment in deleted_poll.comments:
+        db.session.delete(comment)
 
     db.session.delete(deleted_poll)
     db.session.commit()
@@ -121,7 +124,7 @@ def delete_poll(poll_id):
     return jsonify(status="success")
 
 
-@views.route("/api/delete-comment/<comment_id>", methods=["POST"])
+@views.route("/api/delete-comment/<comment_id>", methods=["DELETE"])
 def delete_comment(comment_id):
     deleted_comment = Comment.query.get(comment_id)
     db.session.delete(deleted_comment)
@@ -130,7 +133,7 @@ def delete_comment(comment_id):
     return jsonify(status="success")
 
 
-@views.route("/api/delete-user/<user_id>", methods=["POST"])
+@views.route("/api/delete-user/<user_id>", methods=["DELETE"])
 def delete_user(user_id):
     deleted_user = User.query.get(user_id)
     db.session.delete(deleted_user)
