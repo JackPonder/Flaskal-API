@@ -7,8 +7,10 @@ views = Blueprint("views", __name__)
 
 
 @views.route("/api/get-polls")
-def get_polls():
-    polls = Poll.query.order_by(Poll.time_created).all()
+@views.route("/api/get-polls/<sort>")
+def get_polls(sort=None):
+    polls = Poll.query.filter_by(tag=sort).order_by(Poll.time_created).all() \
+        if sort != None else Poll.query.order_by(Poll.time_created).all()
     polls.reverse()
 
     poll_list = []
